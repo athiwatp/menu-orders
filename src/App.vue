@@ -184,7 +184,6 @@
 
 <script>
 // import Hello from './components/Hello'
-// import Prism from 'prismjs'
 import hljs from 'highlight.js'
 
 export default {
@@ -214,30 +213,4 @@ export default {
   background: #F3F5F6;
   padding: 20px;
 }
-
-// .is-64x64 {
-//   border-radius: 26px;
-//   overflow: hidden;
-// }
-// .text {
-//   border: 1px solid #fce473;
-//   border-top-right-radius: 3px;
-//   color: rgba(17, 17, 17, 0.5);
-//   position: relative;
-// }
-// .text:before {
-//   background: #fce473;
-//   border-radius: 3px 3px 0 0;
-//   bottom: 100%;
-//   content: "Example";
-//   display: inline-block;
-//   font-size: 7px;
-//   font-weight: bold;
-//   left: -1px;
-//   letter-spacing: 1px;
-//   padding: 3px 5px;
-//   position: absolute;
-//   text-transform: uppercase;
-//   vertical-align: top;
-// }
 </style>
