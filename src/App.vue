@@ -1,9 +1,14 @@
 <template>
 
-  <section class="section">
+  <Login v-if="!user" :login-action="login"></Login>
+
+  <section class="section" v-if="user">
     <div class="container">
       <div class="columns">
         <div class="column">
+          <img :src="userPhotoURL" alt="" />
+          <button class="button is-large" @click="logout">Logout</button>
+          <hr>
           <span class="tag is-warning is-large" v-for="item in items">
             {{ item.text }}
             <button class="delete" @click="removeTodo(item['.key'])"></button>
@@ -25,31 +30,63 @@
     </div>
   </section>
 
+  <hr>
+
+  <pre>
+    {{user | json}}
+  </pre>
+
 </template>
 
 <script>
+import Login from './components/Login'
+
 var firebase = require('firebase')
 var config = {
   apiKey: 'AIzaSyB0kczzbqHyM3oBt3_dnIkuZ2HVklyyRcs',
-  authDomain: 'localhost:8080', // 'menu-orders.firebaseapp.com',
+  authDomain: 'menu-orders.firebaseapp.com',
   databaseURL: 'https://menu-orders.firebaseio.com',
   storageBucket: ''
 }
 firebase.initializeApp(config)
 var itemsRef = firebase.database().ref('items')
+var provider = new firebase.auth.FacebookAuthProvider()
 
 export default {
   data () {
     return {
-      newTodo: ''
+      newTodo: '',
+      user: null
     }
   },
-  components: {},
+  computed: {
+    userPhotoURL: function () {
+      return this.user.photoURL
+    }
+  },
+  components: {
+    Login
+  },
   firebase: {
     // can bind to either a direct Firebase reference or a query
     items: itemsRef.orderByChild('text')
   },
+  created: function () {
+    let vm = this
+    firebase.auth().onAuthStateChanged(function (user) {
+      vm.$set('user', user)
+    })
+  },
   methods: {
+    login: function () {
+      firebase.auth().signInWithRedirect(provider)
+    },
+    logout: function () {
+      firebase.auth().signOut().then(function () {
+      }, function (error) {
+        console.log(error)
+      })
+    },
     log: function () {
       console.log(this.items)
     },

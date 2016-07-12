@@ -1,5 +1,7 @@
 var path = require('path')
 var express = require('express')
+var https = require('https')
+var fs = require('fs')
 var webpack = require('webpack')
 var config = require('../config')
 var proxyMiddleware = require('http-proxy-middleware')
@@ -56,10 +58,16 @@ app.use(hotMiddleware)
 var staticPath = path.posix.join(config.build.assetsPublicPath, config.build.assetsSubDirectory)
 app.use(staticPath, express.static('./static'))
 
-module.exports = app.listen(port, function (err) {
+var privateKey = fs.readFileSync( './cert/server.key' )
+var certificate = fs.readFileSync( './cert/server.crt' )
+var serverOptions = {
+    key: privateKey,
+    cert: certificate
+}
+module.exports = https.createServer(serverOptions, app).listen(port, function (err) {
   if (err) {
     console.log(err)
     return
   }
-  console.log('Listening at http://localhost:' + port + '\n')
+  console.log('Listening at https://localhost:' + port + '\n')
 })
