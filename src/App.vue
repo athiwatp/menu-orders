@@ -31,7 +31,7 @@
         </div>
 
         <div class="column is-6">
-          <span class="tag is-warning is-large" v-for="item in order">
+          <span class="tag is-success is-large" v-for="item in order">
             {{ item.text }}
             <img class="order-item-owner" :src="item.user.photoURL" alt="" width="24px" height="24px"/>
             <button class="delete" v-if="item.user.uid === user.uid" @click="removeItemFromOrder(item['.key'])"></button>
@@ -147,6 +147,6 @@ export default {
 }
 .order-item-owner {
   border-radius: 12px;
-  margin: auto 2px auto 6px;
+  margin: auto 0px auto 6px;
 }
 </style>
