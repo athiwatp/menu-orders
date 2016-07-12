@@ -12,8 +12,12 @@
       </div>
       <div class="columns">
         <div class="column is-6">
-          <span class="tag is-warning is-large" v-for="item in items" @click="addItemToOrder(item)">
-            {{ item.text }}
+          <h1>{{mode}}</h1>
+          <button class="button" @click="mode = 'seveneleven'">seveneleven</button>
+          <button class="button" @click="mode = 'waterway'">waterway</button>
+          <hr>
+          <span class="tag is-warning is-large" v-for="item in items">
+            <span @click="addItemToOrder(item)">{{ item.text }}</span>
             <button class="delete" @click="removeTodo(item['.key'])"></button>
           </span>
           <br><br>
@@ -21,13 +25,10 @@
             <p class="control has-addons">
               <input class="input is-primary is-large" v-model="newTodo">
               <a class="button is-info is-large">
-                Add #{{ items.length }}
+                เพิ่มรายการอาหาร
               </a>
             </p>
           </form>
-          <hr>
-          <button class="button is-danger is-outlined is-large" @click="clearTodo">Clear</button>
-          <button class="button is-large" @click="log">log</button>
         </div>
 
         <div class="column is-6">
@@ -36,6 +37,9 @@
             <img class="order-item-owner" :src="item.user.photoURL" alt="" width="24px" height="24px"/>
             <button class="delete" v-if="item.user.uid === user.uid" @click="removeItemFromOrder(item['.key'])"></button>
           </span>
+          <hr>
+          <button class="button is-danger is-outlined is-large" @click="clearOrder">Clear</button>
+          <!-- <button class="button is-large" @click="log">log</button> -->
         </div>
       </div>
     </div>
@@ -50,7 +54,7 @@
 </template>
 
 <script>
-import Login from './components/Login'
+import LoginPage from './components/LoginPage'
 
 var firebase = require('firebase')
 var config = {
@@ -68,8 +72,18 @@ var provider = new firebase.auth.FacebookAuthProvider()
 export default {
   data () {
     return {
+      items: [],
       newTodo: '',
+      mode: 'seveneleven',
       user: null
+    }
+  },
+  ready: function () {
+    this.items = this[this.mode]
+  },
+  watch: {
+    'mode': function (val, oldVal) {
+      this.items = this[val]
     }
   },
   computed: {
@@ -78,11 +92,12 @@ export default {
     }
   },
   components: {
-    Login
+    LoginPage
   },
   firebase: {
     // can bind to either a direct Firebase reference or a query
-    items: itemsRef.orderByChild('text'),
+    seveneleven: itemsRef.orderByChild('mode').equalTo('seveneleven'),
+    waterway: itemsRef.orderByChild('mode').equalTo('waterway'),
     order: orderRef
   },
   created: function () {
@@ -105,16 +120,30 @@ export default {
       console.log(this.items)
     },
     removeTodo: function (key) {
-      itemsRef.child(key).remove()
-    },
-    clearTodo: function () {
-      itemsRef.set([])
+      let vm = this
+      vm.$swal({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      }).then(function () {
+        itemsRef.child(key).remove()
+        vm.$swal(
+          'Deleted!',
+          'Your file has been deleted.',
+          'success'
+        )
+      })
     },
     addTodo: function () {
       if (this.newTodo.trim()) {
         // update the Firebase reference!
         itemsRef.push({
-          text: this.newTodo
+          text: this.newTodo,
+          mode: this.mode
         })
         // reset input box
         this.newTodo = ''
@@ -133,7 +162,42 @@ export default {
       orderRef.push(newItem)
     },
     removeItemFromOrder: function (key) {
-      orderRef.child(key).remove()
+      let vm = this
+      vm.$swal({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      }).then(function () {
+        orderRef.child(key).remove()
+        vm.$swal(
+          'Deleted!',
+          'Your file has been deleted.',
+          'success'
+        )
+      })
+    },
+    clearOrder: function () {
+      let vm = this
+      vm.$swal({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, clear it!'
+      }).then(function () {
+        orderRef.set([])
+        vm.$swal(
+          'Deleted!',
+          'Your file has been deleted.',
+          'success'
+        )
+      })
     }
   }
 }
@@ -144,6 +208,9 @@ export default {
 
 .tag {
   margin: 10px;
+}
+.tag span {
+  cursor: pointer;
 }
 .order-item-owner {
   border-radius: 12px;
