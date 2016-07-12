@@ -1,6 +1,6 @@
 <template>
 
-  <Login v-if="!user" :login-action="login"></Login>
+  <login-page v-if="!user" :login-action="login"></login-page>
 
   <section class="section" v-if="user">
     <div class="container">
@@ -63,6 +63,7 @@ var config = {
   databaseURL: 'https://menu-orders.firebaseio.com',
   storageBucket: ''
 }
+
 firebase.initializeApp(config)
 var itemsRef = firebase.database().ref('items')
 var orderRef = firebase.database().ref('order')
