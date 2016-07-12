@@ -4,26 +4,22 @@
     <div class="container">
       <div class="columns">
         <div class="column">
-          <ul>
-            <li v-for="item in items">
-              <span class="tag is-warning is-medium">{{ item['.key'] }}</span>
-              <span class="tag is-primary is-medium">{{ item.text }}</span>
-              <button class="button is-danger is-outlined" @click="removeTodo(item['.key'])">X</button>
-              <br>
-              <br>
-            </li>
-          </ul>
+          <span class="tag is-warning is-large" v-for="item in items">
+            {{ item.text }}
+            <button class="delete" @click="removeTodo(item['.key'])"></button>
+          </span>
+          <br><br>
           <form @submit.prevent="addTodo">
             <p class="control has-addons">
-              <input class="input is-primary" v-model="newTodo">
-              <a class="button is-info">
+              <input class="input is-primary is-large" v-model="newTodo">
+              <a class="button is-info is-large">
                 Add #{{ items.length }}
               </a>
             </p>
           </form>
           <hr>
-          <button class="button is-danger is-outlined" @click="clearTodo">Clear</button>
-          <button class="button" @click="log">log</button>
+          <button class="button is-danger is-outlined is-large" @click="clearTodo">Clear</button>
+          <button class="button is-large" @click="log">log</button>
         </div>
       </div>
     </div>
@@ -79,4 +75,8 @@ export default {
 
 <style lang="scss">
 @import "~bulma";
+
+.tag {
+  margin-right: 20px;
+}
 </style>
