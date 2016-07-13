@@ -44,7 +44,24 @@
       </div>
     </div>
   </section>
-
+  <section>
+    รายการที่ต้องการสั่ง
+    <table>
+      <tr v-for="item in countOrder">
+        <td>
+          {{ item.menu }}
+        </td>
+        <td>
+          {{ item.amount}}
+        </td>
+        <td>
+          <div v-for="user in item.user_list" style="float: left">
+              <img class="order-item-owner" :src="user.photoURL" alt="" width="24px" height="24px"/>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </section>
   <!-- <hr>
 
   <pre>
@@ -75,7 +92,9 @@ export default {
       items: [],
       newTodo: '',
       mode: 'seveneleven',
-      user: null
+      user: null,
+      showItemsOrder: []
+
     }
   },
   ready: function () {
@@ -89,7 +108,30 @@ export default {
   computed: {
     userPhotoURL: function () {
       return this.user.photoURL
+    },
+    countOrder: function () {
+      var order = this.order
+      var orderName = order.map(function (item) {
+        return item.text
+      })
+      .filter(function (element, index, self) {
+        return index === self.indexOf(element)
+      })
+
+      var userOrder = []
+      orderName.forEach(function (item) {
+        var user = order.filter(function (value) {
+          return value.text === item
+        })
+        .map(function (value) {
+          return value.user
+        })
+        userOrder.push({menu: item, user_list: user, amount: user.length})
+      })
+
+      return userOrder
     }
+
   },
   components: {
     LoginPage
