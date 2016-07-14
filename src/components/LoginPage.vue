@@ -3,7 +3,9 @@
     <div class="container">
       <div class="columns">
         <div class="column">
-          <button class="button is-large" @click="loginAction">Login</button>
+          <center>
+            <button class="button is-info is-large" @click="loginAction">Login</button>
+          </center>
         </div>
       </div>
     </div>

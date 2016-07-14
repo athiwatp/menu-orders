@@ -12,9 +12,11 @@
       </div>
       <div class="columns">
         <div class="column is-6">
-          <h1>{{mode}}</h1>
+          <!-- <h1>{{mode}}</h1>
           <button class="button" @click="mode = 'seveneleven'">seveneleven</button>
           <button class="button" @click="mode = 'waterway'">waterway</button>
+          <hr> -->
+          <h1 class="title">Menu</h1>
           <hr>
           <span class="tag is-warning is-large" v-for="item in items">
             <span @click="addItemToOrder(item)">{{ item.text }}</span>
@@ -23,45 +25,57 @@
           <br><br>
           <form @submit.prevent="addTodo">
             <p class="control has-addons">
-              <input class="input is-primary is-large" v-model="newTodo">
-              <a class="button is-info is-large">
-                เพิ่มรายการอาหาร
-              </a>
+              <input class="input is-warning is-large" placeholder="เพิ่ม Menu ใหม่" v-model="newTodo">
+              <button type="submit" class="button is-warning is-large">+</button>
             </p>
           </form>
         </div>
 
         <div class="column is-6">
-          <span class="tag is-success is-large" v-for="item in order">
+          <h1 id="your-order" class="title">Your orders</h1>
+          <hr>
+          <span class="tag is-success is-large" v-for="item in userOrder">
             {{ item.text }}
             <img class="order-item-owner" :src="item.user.photoURL" alt="" width="24px" height="24px"/>
             <button class="delete" v-if="item.user.uid === user.uid" @click="removeItemFromOrder(item['.key'])"></button>
           </span>
           <hr>
-          <button class="button is-danger is-outlined is-large" @click="clearOrder">Clear</button>
-          <!-- <button class="button is-large" @click="log">log</button> -->
+          <h1 class="title">รายการที่ต้องการสั่ง</h1>
+          <button class="button is-danger is-outlined" v-if="isSuperAdmin" @click="clearOrder">Clear</button>
+          <table class="table is-narrow">
+            <thead>
+              <tr>
+                <td>รายการ</td>
+                <td>จำนวน</td>
+                <td>&nbsp;</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in countOrder">
+                <td>
+                  {{ item.menu }}
+                </td>
+                <td class="is-medium">
+                  {{ item.amount}}
+                </td>
+                <td>
+                  <div v-for="user in item.user_list" style="float: left">
+                      <img class="order-item-owner" :src="user.photoURL" alt="" width="24px" height="24px"/>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <a v-if="isSuperAdmin" href="http://line.me/R/msg/text/?{{countOrderTextUrlEncode}}">
+            <img src="https://media.line.me/img/button/en/78x20.png" alt="LINE it!" />
+          </a>
+
         </div>
       </div>
     </div>
   </section>
-  <section>
-    รายการที่ต้องการสั่ง
-    <table>
-      <tr v-for="item in countOrder">
-        <td>
-          {{ item.menu }}
-        </td>
-        <td>
-          {{ item.amount}}
-        </td>
-        <td>
-          <div v-for="user in item.user_list" style="float: left">
-              <img class="order-item-owner" :src="user.photoURL" alt="" width="24px" height="24px"/>
-          </div>
-        </td>
-      </tr>
-    </table>
-  </section>
+
   <!-- <hr>
 
   <pre>
@@ -91,7 +105,7 @@ export default {
     return {
       items: [],
       newTodo: '',
-      mode: 'seveneleven',
+      mode: 'waterway',
       user: null,
       showItemsOrder: []
 
@@ -106,8 +120,16 @@ export default {
     }
   },
   computed: {
+    isSuperAdmin: function () {
+      let superAdmin = ['77r5S85s4yNrvJM0Pbk8bfVqXA63', 'C3rf3ITyNIOui8BsZxeyAq86Itz1', 'xjSvAlRo2ldUTBZ1q15hX8S3PMk2', 'T1MdigKJjqftGK6KBPGxwvFd3Qa2']
+      return superAdmin.find((admin) => admin === this.user.uid)
+    },
     userPhotoURL: function () {
       return this.user.photoURL
+    },
+    userOrder: function () {
+      let vm = this
+      return this.order.filter((item) => item.user.uid === vm.user.uid)
     },
     countOrder: function () {
       var order = this.order
@@ -130,8 +152,12 @@ export default {
       })
 
       return userOrder
+    },
+    countOrderTextUrlEncode: function () {
+      return encodeURI(this.countOrder.reduce((previous, current) => {
+        return (previous += current.menu + ' ' + current.amount + '\r\n')
+      }, ''))
     }
-
   },
   components: {
     LoginPage
@@ -173,11 +199,6 @@ export default {
         confirmButtonText: 'Yes, delete it!'
       }).then(function () {
         itemsRef.child(key).remove()
-        vm.$swal(
-          'Deleted!',
-          'Your file has been deleted.',
-          'success'
-        )
       })
     },
     addTodo: function () {
@@ -191,6 +212,16 @@ export default {
         this.newTodo = ''
       }
     },
+    getOffset: function (el) {
+      var _x = 0
+      var _y = 0
+      while (el && !isNaN(el.offsetLeft) && !isNaN(el.offsetTop)) {
+        _x += el.offsetLeft - el.scrollLeft
+        _y += el.offsetTop - el.scrollTop
+        el = el.offsetParent
+      }
+      return { top: _y, left: _x }
+    },
     addItemToOrder: function (item) {
       let { uid, displayName, photoURL } = this.user
       let newItem = {
@@ -202,6 +233,8 @@ export default {
         }
       }
       orderRef.push(newItem)
+      let sc = this.getOffset(document.getElementById('your-order')).top
+      window.scroll(0, sc)
     },
     removeItemFromOrder: function (key) {
       let vm = this
@@ -215,11 +248,6 @@ export default {
         confirmButtonText: 'Yes, delete it!'
       }).then(function () {
         orderRef.child(key).remove()
-        vm.$swal(
-          'Deleted!',
-          'Your file has been deleted.',
-          'success'
-        )
       })
     },
     clearOrder: function () {
@@ -234,11 +262,6 @@ export default {
         confirmButtonText: 'Yes, clear it!'
       }).then(function () {
         orderRef.set([])
-        vm.$swal(
-          'Deleted!',
-          'Your file has been deleted.',
-          'success'
-        )
       })
     }
   }
