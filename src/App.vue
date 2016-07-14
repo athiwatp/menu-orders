@@ -1,12 +1,12 @@
 <template>
 
-  <Login v-if="!user" :login-action="login"></Login>
+  <login-page v-if="!user" :login-action="login"></login-page>
 
   <section class="section" v-if="user">
     <div class="container">
       <div class="columns">
         <div class="column is-12">
-          <img :src="userPhotoURL" alt="" />
+          <img class="user-photo" :src="userPhotoURL" alt="" />
           <button class="button is-large" @click="logout">Logout</button>
         </div>
       </div>
@@ -80,11 +80,11 @@ var config = {
   databaseURL: 'https://menu-orders.firebaseio.com',
   storageBucket: ''
 }
+
 firebase.initializeApp(config)
+var provider = new firebase.auth.FacebookAuthProvider()
 var itemsRef = firebase.database().ref('items')
 var orderRef = firebase.database().ref('order')
-
-var provider = new firebase.auth.FacebookAuthProvider()
 
 export default {
   data () {
@@ -247,7 +247,11 @@ export default {
 
 <style lang="scss">
 @import "~bulma";
-
+.user-photo {
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+}
 .tag {
   margin: 10px;
 }

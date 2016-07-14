@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node build/dev-server.js",
     "build": "node build/build.js",
+    "deploy": "node build/build.js && firebase deploy",
     "unit": "karma start test/unit/karma.conf.js --single-run",
     "e2e": "node test/e2e/runner.js",
     "test": "npm run unit && npm run e2e",
@@ -17,7 +18,7 @@
     "bulma": "^0.1.0",
     "firebase": "^3.1.0",
     "vue": "^1.0.21",
-    "vue-sweetalert": "^0.1.5",
+    "vue-sweetalert": "github:n9ti/vue-sweetalert",
     "vuefire": "^1.1.1"
   },
   "devDependencies": {
