@@ -83,11 +83,11 @@
     </div>
   </section>
 
-  <hr>
+  <!-- <hr>
 
   <pre>
     {{currentOrder | json}}
-  </pre>
+  </pre> -->
 
 </template>
 
