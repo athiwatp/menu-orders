@@ -31,17 +31,24 @@
           </form>
         </div>
 
-        <div class="column is-6">
-          <h1 id="your-order" class="title">Your orders</h1>
+        <div class="column is-6" v-if="!isCurrent">
+          <center>
+            <button class="button" @click="createNewOrder">สร้าง Order ใหม่</button>
+          </center>
+        </div>
+
+        <div class="column is-6" v-if="isCurrent">
+          <h1 id="your-order" class="title">Your orders {{currentOrder.status}}</h1>
           <hr>
-          <span class="tag is-success is-large" v-for="item in userOrder">
+          <span class="tag is-success is-large" v-for="item in currentOrderItems">
             {{ item.text }}
             <img class="order-item-owner" :src="item.user.photoURL" alt="" width="24px" height="24px"/>
             <button class="delete" v-if="item.user.uid === user.uid" @click="removeItemFromOrder(item['.key'])"></button>
           </span>
           <hr>
           <h1 class="title">รายการที่ต้องการสั่ง</h1>
-          <button class="button is-danger is-outlined" v-if="isSuperAdmin" @click="clearOrder">Clear</button>
+          <h1 class="subtitle">โดย {{currentOrder.by.displayName}} <span><img class="by" :src="currentOrder.by.photoURL"/></span></h1>
+          <button class="button is-danger is-outlined" v-if="isSuperAdmin" @click="cancelOrder">ยกลิก</button>
           <table class="table is-narrow">
             <thead>
               <tr>
@@ -67,7 +74,7 @@
             </tbody>
           </table>
 
-          <a v-if="isSuperAdmin" href="http://line.me/R/msg/text/?{{countOrderTextUrlEncode}}">
+          <a v-if="isSuperAdmin" @click="doneOrder">
             <img src="https://media.line.me/img/button/en/78x20.png" alt="LINE it!" />
           </a>
 
@@ -76,11 +83,11 @@
     </div>
   </section>
 
-  <!-- <hr>
+  <hr>
 
   <pre>
-    {{user | json}}
-  </pre> -->
+    {{currentOrder | json}}
+  </pre>
 
 </template>
 
@@ -99,6 +106,8 @@ firebase.initializeApp(config)
 var provider = new firebase.auth.FacebookAuthProvider()
 var itemsRef = firebase.database().ref('items')
 var orderRef = firebase.database().ref('order')
+
+var ordersRef = firebase.database().ref('orders')
 
 export default {
   data () {
@@ -120,19 +129,39 @@ export default {
     }
   },
   computed: {
+    isCurrent: function () {
+      if (!this.currentOrder) return false
+      return this.currentOrder.status === 'current'
+    },
     isSuperAdmin: function () {
-      let superAdmin = ['77r5S85s4yNrvJM0Pbk8bfVqXA63', 'C3rf3ITyNIOui8BsZxeyAq86Itz1', 'xjSvAlRo2ldUTBZ1q15hX8S3PMk2', 'T1MdigKJjqftGK6KBPGxwvFd3Qa2']
-      return superAdmin.find((admin) => admin === this.user.uid)
+      if (this.currentOrder === undefined) return false
+      if (this.currentOrder.by === undefined) return false
+      return this.currentOrder.by.uid === this.user.uid
     },
     userPhotoURL: function () {
       return this.user.photoURL
+    },
+    currentOrder: function () {
+      return this.lastOrders[0]
+    },
+    currentOrderItems: function () {
+      if (this.currentOrder === undefined) return []
+      if (this.currentOrder.items === undefined) return []
+      let items = this.currentOrder.items
+      let currentOrderItems = Object.keys(items).map(function (value, index) {
+        return {
+          ...items[value],
+          '.key': value
+        }
+      })
+      return currentOrderItems
     },
     userOrder: function () {
       let vm = this
       return this.order.filter((item) => item.user.uid === vm.user.uid)
     },
     countOrder: function () {
-      var order = this.order
+      var order = this.currentOrderItems
       var orderName = order.map(function (item) {
         return item.text
       })
@@ -166,7 +195,8 @@ export default {
     // can bind to either a direct Firebase reference or a query
     seveneleven: itemsRef.orderByChild('mode').equalTo('seveneleven'),
     waterway: itemsRef.orderByChild('mode').equalTo('waterway'),
-    order: orderRef
+    order: orderRef,
+    lastOrders: ordersRef.limitToLast(1)
   },
   created: function () {
     let vm = this
@@ -186,6 +216,21 @@ export default {
     },
     log: function () {
       console.log(this.items)
+    },
+    createNewOrder: function () {
+      let {uid, photoURL, displayName} = this.user
+      let newOrder = {
+        by: { uid, photoURL, displayName },
+        status: 'current',
+        items: []
+      }
+      ordersRef.push(newOrder)
+    },
+    done: function (status) {
+      let currentOrderKey = this.currentOrder['.key']
+      let updates = {}
+      updates['orders/' + currentOrderKey + '/status'] = status
+      firebase.database().ref().update(updates)
     },
     removeTodo: function (key) {
       let vm = this
@@ -223,18 +268,22 @@ export default {
       return { top: _y, left: _x }
     },
     addItemToOrder: function (item) {
-      let { uid, displayName, photoURL } = this.user
-      let newItem = {
-        text: item.text,
-        user: {
-          uid,
-          displayName,
-          photoURL
+      if (this.currentOrder.status === 'current') {
+        let { uid, displayName, photoURL } = this.user
+        let newItem = {
+          text: item.text,
+          user: {
+            uid,
+            displayName,
+            photoURL
+          }
         }
+        let currentOrderKey = this.currentOrder['.key']
+        let currentOrderItems = firebase.database().ref('orders/' + currentOrderKey + '/items')
+        currentOrderItems.push(newItem)
+        let sc = this.getOffset(document.getElementById('your-order')).top
+        window.scroll(0, sc)
       }
-      orderRef.push(newItem)
-      let sc = this.getOffset(document.getElementById('your-order')).top
-      window.scroll(0, sc)
     },
     removeItemFromOrder: function (key) {
       let vm = this
@@ -250,19 +299,12 @@ export default {
         orderRef.child(key).remove()
       })
     },
-    clearOrder: function () {
-      let vm = this
-      vm.$swal({
-        title: 'Are you sure?',
-        text: "You won't be able to revert this!",
-        type: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, clear it!'
-      }).then(function () {
-        orderRef.set([])
-      })
+    cancelOrder: function () {
+      this.done('cancel')
+    },
+    doneOrder: function () {
+      this.done('done')
+      window.location = 'http://line.me/R/msg/text/?' + this.countOrderTextUrlEncode
     }
   }
 }
@@ -284,5 +326,10 @@ export default {
 .order-item-owner {
   border-radius: 12px;
   margin: auto 0px auto 6px;
+}
+.by {
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
 }
 </style>
